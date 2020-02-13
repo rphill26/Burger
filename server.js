@@ -32,10 +32,48 @@ connection.connect(err => {
 
 app.get("/", function(req, res) {
   connection.query("SELECT * FROM burgers;", function(err, data) {
-    if (err) throw err;
+    if (err) {
+      return res.status(500).end();
+    }
 
     res.render("/index", { burgers: data });
   });
+});
+
+app.post("api/burgers", function(req, res) {
+  connection.query(
+    "INSERT INTO burgers (burger_name) VALUES (?)",
+    [req.body.burger],
+    function(err, result) {
+      if (err) {
+        return res.status(500).end();
+      }
+
+      res.json({ id: result.insertId });
+    }
+  );
+});
+
+app.put("/api/burgers/:id", function(req, res) {
+  connection.query(
+    "UPDATE burgers SET devoured = 1 WHERE id = ?",
+    [req.params.id],
+    function(err, result) {
+      if (err) {
+        console.log(
+          connection.query(
+            "UPDATE burgers SET devoured = 1 WHERE id = ?",
+            [req.params.id],
+            function(err, result) {}
+          ).sql
+        );
+        return res.status(500).end();
+      } else if (result.affectedRows === 0) {
+        return res.status(404).end();
+      }
+      res.status(200).end();
+    }
+  );
 });
 
 app.listen(PORT, () => {
