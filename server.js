@@ -1,81 +1,39 @@
-const express = require("express");
-const exphbs = require("express-handlebars");
-const mysql = require("mysql");
+var express = require("express");
+var bodyParser = require("body-parser");
+var exphbs = require("express-handlebars");
+var methodOverride = require("method-override");
+
+// Import routes and give the server access to them.
+var burgersController = require("./controllers/burgers_controller.js");
+// Import the model (burger.js) to use its database functions.
+var burger = require("./models/burger.js");
+
+var port = process.env.PORT || 3000;
 
 var app = express();
 
-var PORT = process.env.PORT || 3307;
-
+// Serve static content for the app from the "public" directory in the application directory.
 app.use(express.static("public"));
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(methodOverride("X-HTTP-Method-Override"));
 
+// Body-parser
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// Handlebars
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-var connection = mysql.createConnection({
-  host: "localhost",
-  port: 3307,
-  user: "root",
-  password: "Balebale123*",
-  database: "burgers_db"
-});
-
-connection.connect(err => {
-  if (err) {
-    console.error("error connecting: " + err.stack);
-    return;
-  }
-  console.log("connected as id " + connection.threadId);
-});
-
 app.get("/", function(req, res) {
-  connection.query("SELECT * FROM burgers;", function(err, data) {
-    if (err) {
-      return res.status(500).end();
-    }
-
-    res.render("/index", { burgers: data });
+  burger.selectAll(function(data) {
+    var hbsObject = {
+      burgers: data
+    };
+    console.log(hbsObject);
+    res.render("index", hbsObject);
   });
 });
 
-app.post("api/burgers", function(req, res) {
-  connection.query(
-    "INSERT INTO burgers (burger_name) VALUES (?)",
-    [req.body.burger],
-    function(err, result) {
-      if (err) {
-        return res.status(500).end();
-      }
+app.use("/api/burgers", burgersController);
 
-      res.json({ id: result.insertId });
-    }
-  );
-});
-
-app.put("/api/burgers/:id", function(req, res) {
-  connection.query(
-    "UPDATE burgers SET devoured = 1 WHERE id = ?",
-    [req.params.id],
-    function(err, result) {
-      if (err) {
-        console.log(
-          connection.query(
-            "UPDATE burgers SET devoured = 1 WHERE id = ?",
-            [req.params.id],
-            function(err, result) {}
-          ).sql
-        );
-        return res.status(500).end();
-      } else if (result.affectedRows === 0) {
-        return res.status(404).end();
-      }
-      res.status(200).end();
-    }
-  );
-});
-
-app.listen(PORT, () => {
-  console.log("Server listening on: http://localhost:" + PORT);
-});
+app.listen(port);
