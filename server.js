@@ -1,7 +1,7 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var exphbs = require("express-handlebars");
-var methodOverride = require("method-override");
+// var methodOverride = require("method-override");
 
 var burgersController = require("./controllers/burgers_controller.js");
 var burger = require("./models/burger.js");
@@ -12,7 +12,7 @@ var app = express();
 
 app.use(express.static("public"));
 
-app.use(methodOverride("X-HTTP-Method-Override"));
+// app.use(methodOverride("X-HTTP-Method-Override"));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
